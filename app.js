@@ -5,12 +5,10 @@ const path = require("path");
 const app = express();
 const PORT = 3001;
 
-// >>> Tempel API key MapTiler kamu di sini <<<
-const API_KEY = "ISI_API_KEY_KAMU";
+const API_KEY = "SWjJnI1z0kC0dMuYTxon";
 
 app.use(express.static(path.join(__dirname, "public")));
 
-// Ambil nama wilayah dari context (atau dari fitur itu sendiri) berdasarkan tipe
 function pick(f, types) {
     for (const t of types) {
         if ((f.place_type || []).includes(t)) return f.text;
