@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sakura - Cari Lokasi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* Palet tiap musim */
+  body{--bg1:#ffe3ec;--bg2:#ffc9dc;--card:#fff9fb;--ink:#5a2a3a;--accent:#e8709a;--on:#fff;--petal:#ffb7d0}
+  body[data-season="yozakura"]{--bg1:#141a3a;--bg2:#2c2450;--card:#1c2148;--ink:#ffe8f1;--accent:#ff9ec0;--on:#1c1030;--petal:#ffc2d8}
+  body[data-season="matcha"]{--bg1:#e4f0d6;--bg2:#b9d6a0;--card:#fbfff5;--ink:#2f4a2a;--accent:#6ea256;--on:#fff;--petal:#d5e8b5}
+  body[data-season="momiji"]{--bg1:#ffe0c2;--bg2:#f08f5a;--card:#fff8f0;--ink:#5a2a12;--accent:#d9541e;--on:#fff;--petal:#f2a24a}
+  body[data-season="yuki"]{--bg1:#e6f1fb;--bg2:#bcd5ee;--card:#fbfdff;--ink:#26425e;--accent:#5a94c9;--on:#fff;--petal:#ffffff}
+
+  *{box-sizing:border-box;margin:0}
+  body{
+    min-height:100vh;display:grid;place-items:center;padding:20px;position:relative;overflow:hidden;
+    font-family:'Zen Maru Gothic',system-ui,sans-serif;color:var(--ink);
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));transition:background .5s;
+  }
+  #petals{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+  #petals i{
+    position:absolute;top:-6vh;background:var(--petal);border-radius:150% 0 150% 0;opacity:.85;
+    animation:fall var(--d) linear var(--dl) infinite;
+  }
+  @keyframes fall{
+    0%{transform:translate(0,0) rotate(0)}
+    50%{transform:translate(var(--x),55vh) rotate(180deg)}
+    100%{transform:translate(calc(var(--x)*-.6),112vh) rotate(400deg)}
+  }
+
+  .card{
+    position:relative;z-index:1;width:min(440px,100%);padding:28px;border-radius:26px;
+    background:var(--card);box-shadow:0 18px 50px color-mix(in srgb,var(--accent) 30%,transparent),0 2px 0 #fff8 inset;
+    transition:background .4s;
+  }
+  .seasons{display:flex;justify-content:center;gap:10px}
+  .seasons button{width:22px;height:22px;border-radius:50%;border:2px solid var(--card);box-shadow:0 0 0 1.5px #0003;cursor:pointer;padding:0}
+  .seasons button[aria-pressed="true"]{box-shadow:0 0 0 2.5px var(--ink);transform:scale(1.12)}
+  .seasons button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+
+  .flower{display:block;width:84px;height:84px;margin:14px auto 4px;animation:spin 30s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .head{text-align:center;font-size:.78rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
+  .line{display:flex;align-items:center;gap:10px;margin:12px 0 14px;color:var(--accent)}
+  .line::before,.line::after{content:"";flex:1;height:1px;background:color-mix(in srgb,var(--accent) 45%,transparent)}
+  .who{text-align:center}
+  .who b{display:block;font-family:'Shippori Mincho',serif;font-weight:700;font-size:1.4rem}
+  .who span{opacity:.7;font-size:.95rem;letter-spacing:.06em}
+
+  form{display:flex;gap:8px;margin:20px 0 6px}
+  input{flex:1;min-width:0;padding:11px 16px;border-radius:999px;border:1.5px solid color-mix(in srgb,var(--ink) 25%,transparent);background:transparent;color:var(--ink);font:inherit;outline:none}
+  input:focus-visible{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent)}
+  input::placeholder{color:color-mix(in srgb,var(--ink) 50%,transparent)}
+  .go{padding:11px 22px;border:0;border-radius:999px;background:var(--accent);color:var(--on);font:700 .95rem 'Zen Maru Gothic',sans-serif;cursor:pointer}
+  .go:hover{filter:brightness(1.07)}
+  .go:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+  #status{min-height:1.3em;font-size:.85rem;margin:6px 2px 8px;opacity:.8}
+  #status.err{color:#d6455d;opacity:1}
+  dl{display:none}
+  dl.show{display:block;animation:up .4s}
+  @keyframes up{from{opacity:0;transform:translateY(8px)}}
+  .row{display:flex;justify-content:space-between;gap:16px;padding:12px 4px;border-top:1px dashed color-mix(in srgb,var(--ink) 22%,transparent)}
+  dt{font-size:.8rem;opacity:.65;flex:none}
+  dd{font-weight:700;text-align:right;font-size:.95rem;word-break:break-word}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-season="sakura">
+  <div id="petals" aria-hidden="true"></div>
+
+  <main class="card">
+    <div class="seasons" id="seasons" role="group" aria-label="Pilih musim"></div>
+
+    <svg class="flower" viewBox="-50 -50 100 100" aria-hidden="true">
+      <g fill="var(--accent)" fill-opacity=".85">
+        <path id="pt" d="M0 -6C-16 -16 -14 -36 -3 -40L0 -35L3 -40C14 -36 16 -16 0 -6Z"/>
+        <use href="#pt" transform="rotate(72)"/><use href="#pt" transform="rotate(144)"/>
+        <use href="#pt" transform="rotate(216)"/><use href="#pt" transform="rotate(288)"/>
+      </g>
+      <circle r="5" fill="var(--card)"/>
+      <g stroke="var(--accent)" stroke-width="1.2" stroke-linecap="round">
+        <path d="M0 0L0 -12M0 0L11 -4M0 0L7 10M0 0L-7 10M0 0L-11 -4"/>
+      </g>
+    </svg>
+
+    <p class="head" id="head">PWS</p>
+    <div class="line" aria-hidden="true">✿</div>
+
+    <div class="who">
+      <b id="nama"></b>
+      <span id="nim"></span>
+    </div>
+
+    <form id="form">
+      <input id="q" placeholder="Cari lokasi, mis. Kasihan" autocomplete="off" required aria-label="Lokasi">
+      <button class="go" type="submit">Cari</button>
+    </form>
+    <p id="status" role="status"></p>
+
+    <dl id="out">
+      <div class="row"><dt>Lokasi</dt><dd id="lokasi"></dd></div>
+      <div class="row"><dt>Negara</dt><dd id="negara"></dd></div>
+      <div class="row"><dt>Provinsi</dt><dd id="provinsi"></dd></div>
+      <div class="row"><dt>Kecamatan</dt><dd id="kecamatan"></dd></div>
+      <div class="row"><dt>Longitude</dt><dd id="lon"></dd></div>
+      <div class="row"><dt>Latitude</dt><dd id="lat"></dd></div>
+    </dl>
+  </main>
+
+<script>
+  // >>> Ganti nama dan NIM di sini <<<
+  const NAMA = "Vania Azharia Putri";
+  const NIM  = "20240140257";
+
+  const $ = id => document.getElementById(id);
+  $("nama").textContent = NAMA;
+  $("nim").textContent = NIM;
+  $("head").textContent = "PWS " + new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+
+  // Kelopak berjatuhan
+  for (let i = 0; i < 26; i++) {
+    const p = document.createElement("i");
+    const s = 8 + Math.random() * 10;
+    p.style.cssText = `left:${Math.random()*100}%;width:${s}px;height:${s}px;--d:${9+Math.random()*9}s;--dl:-${Math.random()*14}s;--x:${(Math.random()-.4)*160}px`;
+    $("petals").appendChild(p);
+  }
+
+  // Pemilih musim (tema warna)
+  const seasons = [
+    ["sakura", "Sakura", "#f28cb1"], ["yozakura", "Yozakura (sakura malam)", "#2c2450"], ["matcha", "Matcha", "#8bbd6f"],
+    ["momiji", "Momiji (musim gugur)", "#e2662a"], ["yuki", "Yuki (salju)", "#a9c9e8"]
+  ];
+  function setSeason(id) {
+    document.body.dataset.season = id;
+    document.querySelectorAll("#seasons button").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === id));
+    try { localStorage.setItem("season", id); } catch (e) {}
+  }
+  seasons.forEach(([id, name, color]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.dataset.id = id; b.title = name; b.setAttribute("aria-label", "Tema " + name);
+    b.style.background = color;
+    b.onclick = () => setSeason(id);
+    $("seasons").appendChild(b);
+  });
+  let saved = "sakura";
+  try { saved = localStorage.getItem("season") || "sakura"; } catch (e) {}
+  setSeason(seasons.some(s => s[0] === saved) ? saved : "sakura");
+
+  // Cari lokasi lewat server sendiri
+  $("form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const status = $("status");
+    status.className = "";
+    status.textContent = "Mencari...";
+    try {
+      const res = await fetch("/api/lokasi?q=" + encodeURIComponent($("q").value.trim()));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Terjadi kesalahan");
+      const d = data.hasil[0];
+      $("lokasi").textContent = d.lokasi;
+      $("negara").textContent = d.negara;
+      $("provinsi").textContent = d.provinsi;
+      $("kecamatan").textContent = d.kecamatan;
+      $("lon").textContent = d.longitude.toFixed(6);
+      $("lat").textContent = d.latitude.toFixed(6);
+      $("out").classList.add("show");
+      status.textContent = "";
+    } catch (err) {
+      $("out").classList.remove("show");
+      status.className = "err";
+      status.textContent = err.message;
+    }
+  });
+</script>
+</body>
+</html>
